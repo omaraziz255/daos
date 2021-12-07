@@ -25,7 +25,7 @@ add_repo() {
 
     local repo
     # see if a package we know is in the repo is present
-    if repo=$(dnf repoquery --qf "%{repoid}" "$1" 2>/dev/null | grep ..\*); then
+    if repo=$(dnf -y repoquery --qf "%{repoid}" "$1" 2>/dev/null | grep ..\*); then
         DNF_REPO_ARGS+=" --enablerepo=$repo"
     else
         local repo_url="${REPOSITORY_URL}${add_repo}"
