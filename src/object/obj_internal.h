@@ -108,6 +108,7 @@ struct dc_object {
 	uint64_t		*cob_time_fetch_leader;
 	/** shard object ptrs */
 	struct dc_obj_layout	*cob_shards;
+	uint32_t		cob_ec_parity_rotate:1;
 };
 
 /* to record EC singv fetch stat from different shards */
@@ -158,6 +159,8 @@ struct obj_reasb_req {
 	uint32_t			 orr_iom_tgt_nr;
 	/* number of iom extends */
 	uint32_t			 orr_iom_nr;
+	/* #iods of IO req */
+	uint32_t			 orr_iod_nr;
 	struct daos_oclass_attr		*orr_oca;
 	struct obj_ec_codec		*orr_codec;
 	pthread_mutex_t			 orr_mutex;
@@ -171,8 +174,6 @@ struct obj_reasb_req {
 	/* parity recx list (to compare parity ext/epoch when data recovery) */
 	struct daos_recx_ep_list	*orr_parity_lists;
 	uint32_t			 orr_parity_list_nr;
-	/* #iods of IO req */
-	uint32_t			 orr_iod_nr;
 	/* for data recovery flag */
 	uint32_t			 orr_recov:1,
 	/* for snapshot data recovery flag */
@@ -521,6 +522,8 @@ struct obj_auxi_args {
 	};
 };
 
+#define obj_ec_dkey_hash_get(obj, dkey_hash)	\
+	(obj->cob_ec_parity_rotate ? dkey_hash : 0)
 /**
  * task memory space should enough to use -
  * obj API task with daos_task_args + obj_auxi_args,
@@ -581,7 +584,8 @@ struct dc_obj_verify_args {
 	uint32_t			 num;
 	unsigned int			 eof:1,
 					 non_exist:1,
-					 data_fetched:1;
+					 data_fetched:1,
+					 ec_parity_rotate:1;
 	daos_key_desc_t			 kds[DOVA_NUM];
 	d_sg_list_t			 list_sgl;
 	d_sg_list_t			 fetch_sgl;
@@ -681,6 +685,7 @@ int
 obj_ec_encode_buf(daos_obj_id_t oid, struct daos_oclass_attr *oca,
 		  daos_size_t iod_size, unsigned char *buffer,
 		  unsigned char *p_bufs[]);
+
 int
 obj_ec_parity_alive(daos_handle_t oh, uint64_t dkey_hash, uint32_t map_ver);
 
@@ -774,7 +779,8 @@ struct obj_io_context {
 	uint32_t		 ioc_began:1,
 				 ioc_free_sgls:1,
 				 ioc_lost_reply:1,
-				 ioc_fetch_snap:1;
+				 ioc_fetch_snap:1,
+				 ioc_ec_rotate_parity:1;
 };
 
 struct ds_obj_exec_arg {

@@ -1624,7 +1624,8 @@ dc_tx_commit_prepare(struct dc_tx *tx, tse_task_t *task)
 		else
 			bit_map = NIL_BITMAP;
 
-		i = obj_grp_leader_get(obj, grp_idx, dcsr->dcsr_dkey_hash,
+		i = obj_grp_leader_get(obj, grp_idx,
+				       obj_ec_dkey_hash_get(obj, dcsr->dcsr_dkey_hash),
 				       tx->tx_pm_ver, bit_map);
 		if (i < 0)
 			D_GOTO(out, rc = i);

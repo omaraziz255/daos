@@ -113,6 +113,8 @@ struct ec_agg_entry {
 	daos_handle_t		 ae_obj_hdl;	 /* Object handle for cur obj */
 	struct pl_obj_layout	*ae_obj_layout;
 	struct daos_shard_loc	 ae_peer_pshards[OBJ_EC_MAX_P];
+	uint32_t		 ae_grp_idx;
+	uint32_t		 ae_rotate_parity:1; /* ec parity rotation or not */
 };
 
 /* Parameters used to drive iterate all.
@@ -486,7 +488,6 @@ static int
 agg_get_obj_handle(struct ec_agg_entry *entry)
 {
 	struct ec_agg_param	*agg_param;
-	uint32_t		grp_idx;
 	uint32_t		grp_start;
 	uint32_t		tgt_ec_idx;
 	int			i;
@@ -505,8 +506,7 @@ agg_get_obj_handle(struct ec_agg_entry *entry)
 	if (entry->ae_peer_pshards[0].sd_rank != DAOS_TGT_IGNORE)
 		D_GOTO(out, rc = 0);
 
-	grp_idx = entry->ae_dkey_hash % entry->ae_obj_layout->ol_grp_nr;
-	grp_start = grp_idx * entry->ae_obj_layout->ol_grp_size;
+	grp_start = entry->ae_grp_idx * entry->ae_obj_layout->ol_grp_size;
 	tgt_ec_idx = obj_ec_parity_start(entry->ae_dkey_hash, &entry->ae_oca);
 	for (i = 0; i < obj_ec_parity_tgt_nr(&entry->ae_oca); i++,
 	     tgt_ec_idx = (tgt_ec_idx + 1) % entry->ae_obj_layout->ol_grp_size) {
@@ -2127,7 +2127,8 @@ agg_dkey(daos_handle_t ih, vos_iter_entry_t *entry,
 	 struct ec_agg_param *agg_param, struct ec_agg_entry *agg_entry,
 	 unsigned int *acts)
 {
-	int	rc;
+	uint64_t	dkey_hash;
+	int		rc;
 
 	if (!agg_key_compare(agg_entry->ae_dkey, entry->ie_key)) {
 		D_DEBUG(DB_EPC, "Skip dkey: "DF_KEY" ec agg on re-probe\n",
@@ -2135,10 +2136,15 @@ agg_dkey(daos_handle_t ih, vos_iter_entry_t *entry,
 		*acts |= VOS_ITER_CB_SKIP;
 		return 0;
 	}
+	agg_entry->ae_rotate_parity = 0;
+	agg_entry->ae_dkey = entry->ie_key;
+	dkey_hash = obj_dkey2hash(agg_entry->ae_oid.id_pub, &agg_entry->ae_dkey);
+	agg_entry->ae_grp_idx = dkey_hash % agg_entry->ae_obj_layout->ol_grp_nr;
+	if (agg_entry->ae_rotate_parity)
+		agg_entry->ae_dkey_hash = dkey_hash;
+	else
+		agg_entry->ae_dkey_hash = 0;
 
-	agg_entry->ae_dkey	= entry->ie_key;
-	agg_entry->ae_dkey_hash = obj_dkey2hash(agg_entry->ae_oid.id_pub,
-						&agg_entry->ae_dkey);
 	agg_reset_pos(VOS_ITER_AKEY, agg_entry);
 	rc = agg_shard_is_leader(agg_param->ap_pool_info.api_pool, agg_entry);
 	if (rc == 1) {

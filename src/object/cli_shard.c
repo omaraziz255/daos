@@ -296,9 +296,17 @@ dc_rw_cb_csum_verify(const struct rw_cb_args *rw_args)
 		orwo->orw_iod_csums.ca_arrays->ic_data->cs_csum[0]++;
 
 	reasb_req = rw_args->shard_args->reasb_req;
-	shard_idx = obj_ec_shard_off(rw_args->shard_args->auxi.obj_auxi->dkey_hash,
-				     &rw_args->shard_args->auxi.obj_auxi->obj->cob_oca,
-				     orw->orw_oid.id_shard);
+	if (obj_is_ec(rw_args->shard_args->auxi.obj_auxi->obj)) {
+		shard_idx = obj_ec_shard_off(
+				obj_ec_dkey_hash_get(rw_args->shard_args->auxi.obj_auxi->obj,
+						     rw_args->shard_args->auxi.obj_auxi->dkey_hash),
+				&rw_args->shard_args->auxi.obj_auxi->obj->cob_oca,
+				orw->orw_oid.id_shard);
+	} else {
+		shard_idx = rw_args->shard_args->auxi.shard -
+			    rw_args->shard_args->auxi.start_shard;
+	}
+
 	singv_los = dc_rw_cb_singv_lo_get(iods, sgls, orw->orw_nr, reasb_req);
 
 	D_DEBUG(DB_CSUM, DF_C_UOID_DKEY"VERIFY %d iods dkey_hash "DF_U64"\n",
@@ -734,7 +742,8 @@ dc_shard_update_size(struct rw_cb_args *rw_args, int fetch_rc)
 		uint32_t		shard;
 		struct daos_oclass_attr	*oca;
 		struct shard_fetch_stat	*fetch_stat;
-		bool			 conflict = false;
+		uint64_t		dkey_hash;
+		bool			conflict = false;
 
 		D_DEBUG(DB_IO, DF_UOID" size "DF_U64" eph "DF_U64"\n", DP_UOID(orw->orw_oid),
 			sizes[i], orw->orw_epoch);
@@ -766,9 +775,11 @@ dc_shard_update_size(struct rw_cb_args *rw_args, int fetch_rc)
 		 */
 		shard = orw->orw_oid.id_shard %
 			obj_get_grp_size(rw_args->shard_args->auxi.obj_auxi->obj);
-		if (ec_shard_by_dkey(shard, orw->orw_dkey_hash, oca) ==
-		    obj_ec_singv_small_idx(oca, orw->orw_dkey_hash, iod) ||
-		    is_ec_parity_shard(orw->orw_oid.id_shard, orw->orw_dkey_hash, oca)) {
+		dkey_hash = obj_ec_dkey_hash_get(rw_args->shard_args->auxi.obj_auxi->obj,
+						 orw->orw_dkey_hash);
+		if (ec_shard_by_dkey(shard, dkey_hash, oca) ==
+		    obj_ec_singv_small_idx(oca, dkey_hash, iod) ||
+		    is_ec_parity_shard(orw->orw_oid.id_shard, dkey_hash, oca)) {
 			if (uiod->iod_size != 0 && uiod->iod_size < sizes[i] && fetch_rc == 0) {
 				rec2big = true;
 				rc = -DER_REC2BIG;
@@ -1130,7 +1141,9 @@ dc_rw_cb(tse_task_t *task, void *arg)
 				if (is_ec_obj &&
 				    reply_maps->iom_type == DAOS_IOD_ARRAY) {
 					rc = obj_ec_iom_merge(reasb_req,
-							orw->orw_dkey_hash,
+							obj_ec_dkey_hash_get(
+							rw_args->shard_args->auxi.obj_auxi->obj,
+						rw_args->shard_args->auxi.obj_auxi->dkey_hash),
 							orw->orw_oid.id_shard,
 							orw->orw_tgt_idx,
 							reply_maps,
@@ -1749,9 +1762,10 @@ dc_enumerate_cb(tse_task_t *task, void *arg)
 
 	if (rc != 0) {
 		if (rc == -DER_KEY2BIG) {
-			D_DEBUG(DB_IO, "key size "DF_U64" too big.\n",
-				oeo->oeo_size);
-			enum_args->eaa_kds[0].kd_key_len = oeo->oeo_size;
+			D_DEBUG(DB_IO, "key size "DF_U64" %p too big.\n",
+				oeo->oeo_size, enum_args->eaa_kds);
+			if (enum_args->eaa_kds)
+				enum_args->eaa_kds[0].kd_key_len = oeo->oeo_size;
 		} else if (rc == -DER_INPROGRESS || rc == -DER_TX_BUSY) {
 			D_DEBUG(DB_TRACE, "rpc %p RPC %d may need retry: "DF_RC"\n",
 				enum_args->rpc, opc, DP_RC(rc));
@@ -1833,6 +1847,7 @@ out:
 	crt_req_decref(enum_args->rpc);
 	dc_pool_put((struct dc_pool *)enum_args->hdlp);
 
+	D_DEBUG(DB_TRACE, "exit %d\n", rc);
 	if (ret == 0 || obj_retry_error(rc))
 		ret = rc;
 	return ret;
@@ -2024,9 +2039,9 @@ obj_shard_query_recx_post(struct obj_query_key_cb_args *cb_args, uint32_t shard,
 	daos_recx_t		 recx[2] = {0};
 	uint64_t		 end[2], tmp_end;
 	uint32_t		 tgt_off;
-	uint64_t		 dkey_hash;
 	bool			 from_data_tgt;
 	struct daos_oclass_attr	*oca;
+	uint64_t		dkey_hash;
 	uint64_t		 stripe_rec_nr, cell_rec_nr;
 
 	oca = obj_get_oca(cb_args->obj);
@@ -2035,9 +2050,9 @@ obj_shard_query_recx_post(struct obj_query_key_cb_args *cb_args, uint32_t shard,
 		return;
 	}
 
-	dkey_hash = obj_dkey2hash(cb_args->oid.id_pub, &okqo->okqo_dkey);
+	dkey_hash = obj_ec_dkey_hash_get(cb_args->obj, cb_args->dkey_hash);
 	from_data_tgt = is_ec_data_shard(shard, dkey_hash, oca);
-	tgt_off = obj_ec_shard_off(cb_args->dkey_hash, oca, shard);
+	tgt_off = obj_ec_shard_off(dkey_hash, oca, shard);
 	stripe_rec_nr = obj_ec_stripe_rec_nr(oca);
 	cell_rec_nr = obj_ec_cell_rec_nr(oca);
 	tmp_recx = &recx[0];

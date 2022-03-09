@@ -1991,7 +1991,7 @@ struct enum_unpack_arg {
 	daos_epoch_range_t	epr;
 	d_list_t		merge_list;
 	uint32_t		version;
-	uint32_t		iterate_parity:1;
+	uint32_t		ec_rotate_parity:1;
 };
 
 static int
@@ -2152,6 +2152,9 @@ migrate_enum_unpack_cb(struct dss_enum_unpack_io *io, void *data)
 	rc = obj_ec_parity_alive(arg->oh, io->ui_dkey_hash, arg->version);
 	if (rc < 0)
 		return rc;
+
+	if (!arg->ec_rotate_parity)
+		io->ui_dkey_hash = 0;
 
 	if (rc == 1 &&
 	    is_ec_data_shard(io->ui_oid.id_shard, io->ui_dkey_hash, &arg->oc_attr)) {
@@ -2387,6 +2390,7 @@ migrate_one_epoch_object(daos_epoch_range_t *epr, struct migrate_pool_tls *tls,
 	unpack_arg.epr = *epr;
 	unpack_arg.oh = oh;
 	unpack_arg.version = tls->mpt_version;
+	unpack_arg.ec_rotate_parity = 0;
 	D_INIT_LIST_HEAD(&unpack_arg.merge_list);
 	buf = stack_buf;
 	buf_len = ITER_BUF_SIZE;

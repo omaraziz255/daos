@@ -651,6 +651,9 @@ dc_obj_verify_ec_cb(struct dss_enum_unpack_io *io, void *arg)
 	int				rc;
 
 	D_ASSERT(obj != NULL);
+	if (!dova->ec_parity_rotate)
+		io->ui_dkey_hash = 0;
+
 	D_DEBUG(DB_TRACE, "compare "DF_KEY" nr %d shard "DF_U64" dkey_hash "DF_U64
 		"start EC "DF_U64"\n", DP_KEY(&io->ui_dkey), nr, shard, io->ui_dkey_hash,
 		obj_ec_shard_off(io->ui_dkey_hash, obj_get_oca(obj), io->ui_oid.id_shard));

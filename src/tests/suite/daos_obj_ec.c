@@ -297,6 +297,8 @@ ec_rec_list_punch(void **state)
 	ioreq_fini(&req);
 }
 
+#define ec_parity_rotate	0
+
 static void
 ec_agg_check_replica_on_parity(test_arg_t *arg, daos_obj_id_t oid, char *dkey,
 			       char *akey, daos_off_t offset, daos_size_t size,
@@ -344,7 +346,10 @@ ec_agg_check_replica_on_parity(test_arg_t *arg, daos_obj_id_t oid, char *dkey,
 	assert_true(oid_is_ec(oid, &oca));
 
 	grp_size = oca->u.ec.e_p + oca->u.ec.e_k;
-	dkey_hash = d_hash_murmur64((unsigned char *)dkey, strlen(dkey), 5731);
+	if (ec_parity_rotate)
+		dkey_hash = d_hash_murmur64((unsigned char *)dkey, strlen(dkey), 5731);
+	else
+		dkey_hash = 0;
 	p_shard_off = ((dkey_hash % grp_size) + oca->u.ec.e_k) % grp_size;
 
 	for (i = 0, shard = p_shard_off; i < oca->u.ec.e_p;
