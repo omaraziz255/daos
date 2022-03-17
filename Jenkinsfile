@@ -958,6 +958,7 @@ pipeline {
                     steps {
                         functionalTest inst_repos: daosRepos(),
                                        inst_rpms: functionalPackages(1, next_version),
+                                       node_count: 2,
                                        test_function: 'runTestFunctionalV2'
                     }
                     post {
