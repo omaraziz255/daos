@@ -2,6 +2,7 @@
 
 REPOS_DIR=/etc/yum.repos.d
 DISTRO_NAME=centos8
+DISTRO_GENERIC=el
 LSB_RELEASE=redhat-lsb-core
 EXCLUDE_UPGRADE=dpdk,fuse,mercury,daos,daos-\*
 POWERTOOLSREPO="daos_ci-centos8-powertools"

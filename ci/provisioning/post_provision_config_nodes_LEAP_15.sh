@@ -2,6 +2,7 @@
 
 REPOS_DIR=/etc/dnf/repos.d
 DISTRO_NAME=leap15
+DISTRO_GENERIC=sl
 EXCLUDE_UPGRADE=fuse,fuse-libs,fuse-devel,mercury,daos,daos-\*
 
 bootstrap_dnf() {
