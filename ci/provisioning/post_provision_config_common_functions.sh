@@ -155,8 +155,14 @@ fetch_repo_config() {
     if [ "$repo_server" = "nexus" ]; then
         version="$(lsb_release -sr)"
         version=${version%.*}
-        sed -i -e "s/\$releasever/$version/g" "$repopath"
+        sed -i -e "s/\$releasever/$version/g" "$repopath-tmp"
     fi
+
+    return 0
+}
+
+set_local_repo() {
+    local repo_server="$1"
 
     if [ "$repo_server" = "artifactory" ] &&
         [[ $(echo "$COMMIT_MESSAGE" | sed -ne '/^PR-repos: */s/^[^:]*: *//p') = *daos@* ]] ||
@@ -164,9 +170,11 @@ fetch_repo_config() {
         [ -z "$(echo "$COMMIT_MESSAGE" | sed -ne '/^RPM-test-version: */s/^[^:]*: *//p')" ]; then
         # Disable the daos repo so that the Jenkins job repo is used for daos packages
         dnf -y config-manager --disable daos-stack-daos-\*-"$version"-x86_64-stable-local
+    else
+        dnf -y config-manager --disable daos-stack-daos-\*-"$version"-x86_64-stable-local
     fi
 
-    return 0
+    set_local_repos.sh "$repo_server"
 }
 
 update_repos() {
@@ -195,18 +203,18 @@ update_repos() {
     # content with them
     local file
     for file in "$REPOS_DIR"/*.repo; do
-        [ ! -e "$file" ] || break
+        [ -e "$file" ] || break
         # empty the file but keep it around so that updates don't recreate it
         echo > "$file"
     done
 
     for file in "$REPOS_DIR"/*-tmp; do
-        [ ! -e "$file" ] || break
+        [ -e "$file" ] || break
         mv "$file" "${file%-tmp}"
     done
 
     # see how things ended up
     ls -l "${REPOS_DIR}"
 
-    set_local_repos.sh "${repo_servers[0]}"
+    set_local_repos "${repo_servers[0]}"
 }
