@@ -188,6 +188,8 @@ update_repos() {
         chmod +x /usr/local/sbin/set_local_repos.sh
         rm -f /usr/local/sbin/set_local_repos.sh-tmp
     fi
+    # see how things ended up
+    ls -l "${REPOS_DIR}"
 
     set_local_repos.sh "${repo_servers[0]}"
 }
