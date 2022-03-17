@@ -153,6 +153,7 @@ fetch_repo_config() {
 
     # ugly hackery for nexus repo naming
     if [ "$repo_server" = "nexus" ]; then
+        local version
         version="$(lsb_release -sr)"
         version=${version%.*}
         sed -i -e "s/\$releasever/$version/g" "$repopath-tmp"
@@ -164,6 +165,9 @@ fetch_repo_config() {
 set_local_repo() {
     local repo_server="$1"
 
+    local version
+    version="$(lsb_release -sr)"
+    version=${version%%.*}
     if [ "$repo_server" = "artifactory" ] &&
         [[ $(echo "$COMMIT_MESSAGE" | sed -ne '/^PR-repos: */s/^[^:]*: *//p') = *daos@* ]] ||
         [[ $(echo "$COMMIT_MESSAGE" | sed -ne "/^PR-repos-$DISTRO: */s/^[^:]*: *//p") = *daos@* ]] ||
@@ -189,7 +193,6 @@ update_repos() {
             return 1
         fi
     done
-    time dnf -y repolist
 
     if ! curl -o /usr/local/sbin/set_local_repos.sh-tmp "${REPO_FILE_URL}set_local_repos.sh"; then
         send_mail "Fetch set_local_repos.sh failed.  Continuing on with in-image copy."
@@ -205,13 +208,15 @@ update_repos() {
     for file in "$REPOS_DIR"/*.repo; do
         [ -e "$file" ] || break
         # empty the file but keep it around so that updates don't recreate it
-        echo > "$file"
+        true > "$file"
     done
 
     for file in "$REPOS_DIR"/*-tmp; do
         [ -e "$file" ] || break
         mv "$file" "${file%-tmp}"
     done
+
+    time dnf -y repolist
 
     # see how things ended up
     ls -l "${REPOS_DIR}"
