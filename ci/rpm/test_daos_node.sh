@@ -96,6 +96,7 @@ sudo PYTHONPATH="$FTEST/util"                               \
 sudo PYTHONPATH="$FTEST/util"                        \
      $FTEST/config_file_gen.py -n "$HOSTNAME"        \
                                -d /etc/daos/daos.yml
+echo "core_dump_filter: 0" | sudo tee -a /etc/daos/daos_server.yml
 cat /etc/daos/daos_server.yml
 cat /etc/daos/daos_agent.yml
 cat /etc/daos/daos.yml

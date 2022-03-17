@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -87,6 +88,17 @@ func cfgGetRaftDir(cfg *config.Server) string {
 	}
 
 	return filepath.Join(cfg.Engines[0].Storage.Tiers.ScmConfigs()[0].Scm.MountPoint, "control_raft")
+}
+
+func writeCoreDumpFilter(path string, filter uint8) error {
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		return errors.Wrapf(err, "unable to open core dump filter file %s", path)
+	}
+	defer f.Close()
+
+	_, err = f.WriteString(fmt.Sprintf("0x%x\n", filter))
+	return err
 }
 
 func iommuDetected() bool {
