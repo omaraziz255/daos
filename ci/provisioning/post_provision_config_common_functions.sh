@@ -165,6 +165,8 @@ fetch_repo_config() {
 set_local_repo() {
     local repo_server="$1"
 
+    set_local_repos.sh "$repo_server"
+
     local version
     version="$(lsb_release -sr)"
     version=${version%%.*}
@@ -173,12 +175,10 @@ set_local_repo() {
         [[ $(echo "$COMMIT_MESSAGE" | sed -ne "/^PR-repos-$DISTRO: */s/^[^:]*: *//p") = *daos@* ]] ||
         [ -z "$(echo "$COMMIT_MESSAGE" | sed -ne '/^RPM-test-version: */s/^[^:]*: *//p')" ]; then
         # Disable the daos repo so that the Jenkins job repo is used for daos packages
-        dnf -y config-manager --disable daos-stack-daos-${DISTRO_GENERIC}-"$version"-x86_64-stable-local
+        dnf -y config-manager --disable daos-stack-daos-${DISTRO_GENERIC}-"$version"-x86_64-stable-local || dnf -y repolist
     else
         dnf -y config-manager --disable daos-stack-daos-${DISTRO_GENERIC}-"$version"-x86_64-stable-local
     fi
-
-    set_local_repos.sh "$repo_server"
 }
 
 update_repos() {
