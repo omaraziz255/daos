@@ -32,7 +32,7 @@ retry_dnf() {
             if [ "$attempt" -eq 2 ] && [ ${#repo_servers[@]} -gt 1 ]; then
                 # but we were using an experimental repo server, so fall back to the
                 # non-experimental one after trying twice with the experimental one
-                set_local_repos.sh "${repo_servers[1]}"
+                set_local_repos "${repo_servers[1]}"
                 dnf -y makecache
                 if [ -n "${POWERTOOLSREPO:-}" ]; then
                     POWERTOOLSREPO=${POWERTOOLSREPO/${repo_servers[0]}/${repo_servers[1]}}
@@ -216,5 +216,5 @@ update_repos() {
     # see how things ended up
     ls -l "${REPOS_DIR}"
 
-    set_local_repos "${repo_servers[0]}"
+    set_local_repo "${repo_servers[0]}"
 }
