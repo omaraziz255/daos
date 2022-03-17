@@ -146,10 +146,11 @@ fetch_repo_config() {
 
     repo_file="daos_ci-${DISTRO_NAME}-$repo_server.repo"
     local repopath="${REPOS_DIR}/$repo_file"
-    if ! curl -f -o "$repopath" \
+    if ! curl -f -o "$repopath-tmp" \
               "$REPO_FILE_URL$repo_file"; then
         return 1
     fi
+
     # ugly hackery for nexus repo naming
     if [ "$repo_server" = "nexus" ]; then
         version="$(lsb_release -sr)"
@@ -177,6 +178,7 @@ update_repos() {
         if ! fetch_repo_config "$repo_server"; then
             # leave the existing on-image repo config alone if the repo fetch fails
             send_mail "Fetch repo file for repo server \"$repo_server\" failed.  Continuing on with in-image repos."
+            return 1
         fi
     done
     time dnf -y repolist
@@ -188,6 +190,21 @@ update_repos() {
         chmod +x /usr/local/sbin/set_local_repos.sh
         rm -f /usr/local/sbin/set_local_repos.sh-tmp
     fi
+
+    # successfully grabbed them all, so replace the entire $REPOS_DIR
+    # content with them
+    local file
+    for file in "$REPOS_DIR"/*.repo; do
+        [ ! -e "$file" ] || break
+        # empty the file but keep it around so that updates don't recreate it
+        echo > "$file"
+    done
+
+    for file in "$REPOS_DIR"/*-tmp; do
+        [ ! -e "$file" ] || break
+        mv "$file" "${file%-tmp}"
+    done
+
     # see how things ended up
     ls -l "${REPOS_DIR}"
 
