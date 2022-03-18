@@ -94,9 +94,6 @@ setenv			MPI_SUFFIX	_openmpi
 setenv	 		MPI_HOME	/usr/mpi/gcc/openmpi-${version}
 EOF
     fi
-
-    # temp hack to break repo to trigger nexus fall-back
-    sed -i -e 's/$releasever/99.99/g' "$REPOS_DIR"/daos_ci-"$DISTRO_NAME".repo
 }
 
 post_provision_config_nodes() {
