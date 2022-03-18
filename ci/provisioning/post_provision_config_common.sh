@@ -8,5 +8,5 @@ if [ -n "$repo_server_pragma" ]; then
 else
     # default is artifactory
     # shellcheck disable=SC2034
-    repo_servers=('artifactory' ''nexus')
+    repo_servers=('artifactory' 'nexus')
 fi
