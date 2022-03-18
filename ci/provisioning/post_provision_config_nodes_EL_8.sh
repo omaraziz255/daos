@@ -113,7 +113,10 @@ post_provision_config_nodes() {
     fi
 
     # shellcheck disable=SC2154
-    update_repos "$DISTRO_NAME"
+    if ! update_repos "$DISTRO_NAME"; then
+        # need to use the image supplied repos
+        repo_servers=()
+    fi
 
     time dnf -y repolist
 
