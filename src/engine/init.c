@@ -898,6 +898,7 @@ parse(int argc, char **argv)
 		{ "instance_idx",	required_argument,	NULL,	'I' },
 		{ "bypass_health_chk",	no_argument,		NULL,	'b' },
 		{ "storage_tiers",	required_argument,	NULL,	'T' },
+		{ "nr_sec_ctx",		required_argument,	NULL,	'S' },
 		{ NULL,			0,			NULL,	0}
 	};
 	int	rc = 0;
@@ -973,6 +974,9 @@ parse(int argc, char **argv)
 				printf("Requires 1 or 2 tiers\n");
 				rc = -DER_INVAL;
 			}
+			break;
+		case 'S':
+			/* TODO KJ: save number of cart ctxs */
 			break;
 		default:
 			usage(argv[0], stderr);

@@ -211,6 +211,7 @@ func TestServerConfig_Constructed(t *testing.T) {
 		WithFabricProvider("ofi+verbs").
 		WithCrtCtxShareAddr(0).
 		WithCrtTimeout(30).
+		WithNrSecondaryCtx(1).
 		WithAccessPoints("hostname1").
 		WithFaultCb("./.daos/fd_callback").
 		WithFaultPath("/vcdu0/rack1/hostname").
@@ -240,6 +241,7 @@ func TestServerConfig_Constructed(t *testing.T) {
 			WithFabricProvider("ofi+verbs").
 			WithCrtCtxShareAddr(0).
 			WithCrtTimeout(30).
+			WithNrSecondaryCtx(1).
 			WithPinnedNumaNode(0).
 			WithBypassHealthChk(&bypass).
 			WithEnvVars("CRT_TIMEOUT=30").
@@ -269,6 +271,7 @@ func TestServerConfig_Constructed(t *testing.T) {
 			WithFabricProvider("ofi+verbs").
 			WithCrtCtxShareAddr(0).
 			WithCrtTimeout(30).
+			WithNrSecondaryCtx(1).
 			WithPinnedNumaNode(1).
 			WithBypassHealthChk(&bypass).
 			WithEnvVars("CRT_TIMEOUT=100").
