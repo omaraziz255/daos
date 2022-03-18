@@ -176,8 +176,6 @@ set_local_repo() {
         [ -z "$(echo "$COMMIT_MESSAGE" | sed -ne '/^RPM-test-version: */s/^[^:]*: *//p')" ]; then
         # Disable the daos repo so that the Jenkins job repo is used for daos packages
         dnf -y config-manager --disable daos-stack-daos-${DISTRO_GENERIC}-"$version"-x86_64-stable-local-artifactory || dnf -y repolist
-    else
-        dnf -y config-manager --disable daos-stack-daos-${DISTRO_GENERIC}-"$version"-x86_64-stable-local-artifactory
     fi
 }
 
