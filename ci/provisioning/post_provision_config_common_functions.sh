@@ -20,7 +20,7 @@ retry_dnf() {
         if monitor_cmd "$monitor_threshold" "${args[@]}"; then
             # Command succeeded, return with success
             if [ $attempt -gt 0 ]; then
-                send_mail "Command retry successful in $STAGE_NAME after $attempt attempts using ${repo_servers[0]} as initial repo server " \
+                send_mail "Command retry successful in $STAGE_NAME after $((attempt + 1)) attempts using ${repo_servers[0]} as initial repo server " \
                           "Command:  ${args[*]}\nAttempts: $attempt\nStatus:   $rc"
             fi
             return 0
