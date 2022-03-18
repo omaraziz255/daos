@@ -11,10 +11,8 @@ bootstrap_dnf() {
 }
 
 group_repo_post() {
-    if [ -n "$DAOS_STACK_GROUP_REPO" ]; then
-        rpm --import \
-            "${REPOSITORY_URL}${DAOS_STACK_GROUP_REPO%/*}/opensuse-15.2-devel-languages-go-x86_64-proxy/repodata/repomd.xml.key"
-    fi
+    # Nothing to do for SL
+    :
 }
 
 distro_custom() {
@@ -54,21 +52,7 @@ post_provision_config_nodes() {
     update_repos "$DISTRO_NAME"
 
     time dnf -y repolist
-    # the group repo is always on the test image
-    #add_group_repo
-    # in fact is's on the Leap image twice so remove one
-    rm -f $REPOS_DIR/daos-stack-ext-opensuse-15-stable-group.repo
-    # local repo won't be configured on Vagrant test nodes
-    #add_local_repo
 
-    # CORCI-1096
-    # workaround until new snapshot images are produced
-    # Assume if APPSTREAM is locally proxied so is epel-modular
-    # so disable the upstream epel-modular repo
-    # I don't think this is needed any more
-    #if [ -n "${DAOS_STACK_EL_8_APPSTREAM_REPO:-}" ]; then
-    #    dnf -y config-manager --disable epel-modular appstream powertools
-    #fi
     time dnf repolist
 
     if [ -n "$INST_REPOS" ]; then

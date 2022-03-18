@@ -8,33 +8,6 @@ EXCLUDE_UPGRADE=dpdk,fuse,mercury,daos,daos-\*
 POWERTOOLSREPO="daos_ci-centos8-powertools"
 
 bootstrap_dnf() {
-    # hack in the removal of group repos
-    version="$(lsb_release -sr)"
-    version=${version%.*}
-    if dnf repolist | grep "repo.dc.hpdd.intel.com_repository_centos-${version}-x86_64-group_"; then
-        rm -f /etc/yum.repos.d/repo.dc.hpdd.intel.com_repository_{centos-8.4,daos-stack-centos-8}-x86_64-group_.repo
-        for repo in centos-${version}-{base,extras,powertools} epel-el-8; do
-            my_repo="${REPOSITORY_URL}repository/$repo-x86_64-proxy"
-            my_name="${my_repo#*//}"
-            my_name="${my_name//\//_}"
-            echo -e "[${my_name}]
-name=created from ${my_repo}
-baseurl=${my_repo}
-enabled=1
-repo_gpgcheck=0
-gpgcheck=1" >> /etc/yum.repos.d/local-centos-"$repo".repo
-        done
-        my_repo="${REPOSITORY_URL}/repository/daos-stack-el-8-x86_64-stable-local"
-        my_name="${my_repo#*//}"
-        my_name="${my_name//\//_}"
-        echo -e "[${my_name}]
-name=created from ${my_repo}
-baseurl=${my_repo}
-enabled=1
-repo_gpgcheck=0
-gpgcheck=0" >> /etc/yum.repos.d/local-daos-group.repo
-    fi
-
     systemctl enable postfix.service
     systemctl start postfix.service
 }
@@ -143,18 +116,7 @@ post_provision_config_nodes() {
     update_repos "$DISTRO_NAME"
 
     time dnf -y repolist
-    # the group repo is always on the test image
-    #add_group_repo
-    #add_local_repo
 
-    # CORCI-1096
-    # workaround until new snapshot images are produced
-    # Assume if APPSTREAM is locally proxied so is epel-modular
-    # so disable the upstream epel-modular repo
-    # I don't think this is needed any more
-    #if [ -n "${DAOS_STACK_EL_8_APPSTREAM_REPO:-}" ]; then
-    #    dnf -y config-manager --disable appstream powertools
-    #fi
     time dnf repolist
 
     if [ -n "$INST_REPOS" ]; then
