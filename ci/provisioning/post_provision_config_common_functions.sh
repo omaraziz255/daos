@@ -165,8 +165,8 @@ fetch_repo_config() {
 set_local_repo() {
     local repo_server="$1"
 
-    rm -f daos_ci-"$DISTRO_NAME".repo
-    ln daos_ci-"$DISTRO_NAME"{-"$repo_server",.repo}
+    rm -f "$REPOS_DIR"/daos_ci-"$DISTRO_NAME".repo
+    ln "$REPOS_DIR"/daos_ci-"$DISTRO_NAME"{-"$repo_server",.repo}
 
     local version
     version="$(lsb_release -sr)"
