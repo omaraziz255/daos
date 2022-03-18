@@ -147,7 +147,7 @@ fetch_repo_config() {
 
     local repo_file="daos_ci-${DISTRO_NAME}-$repo_server"
     local repopath="${REPOS_DIR}/$repo_file"
-    if ! curl -f -o "$repopath" "$REPO_FILE_URL$repo_file"; then
+    if ! curl -f -o "$repopath" "$REPO_FILE_URL$repo_file.repo"; then
         return 1
     fi
 
