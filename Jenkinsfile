@@ -167,7 +167,7 @@ pipeline {
                defaultValue: 'ci_nlt_1',
                description: "Label to use for NLT tests")
         string(name: 'CI_NVME_3_LABEL',
-               defaultValue: 'stage_node2',
+               defaultValue: 'ci_nvme3',
                description: 'Label to use for 3 node NVMe tests')
         string(name: 'CI_NVME_5_LABEL',
                defaultValue: 'ci_nvme5',
@@ -958,7 +958,6 @@ pipeline {
                     steps {
                         functionalTest inst_repos: daosRepos(),
                                        inst_rpms: functionalPackages(1, next_version),
-                                       node_count: 2,
                                        test_function: 'runTestFunctionalV2'
                     }
                     post {
