@@ -33,7 +33,7 @@ retry_dnf() {
             if [ "$attempt" -eq 2 ] && [ ${#repo_servers[@]} -gt 1 ]; then
                 # but we were using an experimental repo server, so fall back to the
                 # non-experimental one after trying twice with the experimental one
-                set_local_repos "${repo_servers[1]}"
+                set_local_repo "${repo_servers[1]}"
                 dnf -y makecache
                 if [ -n "${POWERTOOLSREPO:-}" ]; then
                     POWERTOOLSREPO=${POWERTOOLSREPO/${repo_servers[0]}/${repo_servers[1]}}
@@ -145,10 +145,9 @@ timeout_cmd() {
 fetch_repo_config() {
     local repo_server="$1"
 
-    repo_file="daos_ci-${DISTRO_NAME}-$repo_server.repo"
+    local repo_file="daos_ci-${DISTRO_NAME}-$repo_server"
     local repopath="${REPOS_DIR}/$repo_file"
-    if ! curl -f -o "$repopath-tmp" \
-              "$REPO_FILE_URL$repo_file"; then
+    if ! curl -f -o "$repopath" "$REPO_FILE_URL$repo_file"; then
         return 1
     fi
 
@@ -157,7 +156,7 @@ fetch_repo_config() {
         local version
         version="$(lsb_release -sr)"
         version=${version%.*}
-        sed -i -e "s/\$releasever/$version/g" "$repopath-tmp"
+        sed -i -e "s/\$releasever/$version/g" "$repopath"
     fi
 
     return 0
@@ -166,7 +165,8 @@ fetch_repo_config() {
 set_local_repo() {
     local repo_server="$1"
 
-    set_local_repos.sh "$repo_server"
+    rm -f daos_ci-"$DISTRO_NAME".repo
+    ln daos_ci-"$DISTRO_NAME"{-"$repo_server",.repo}
 
     local version
     version="$(lsb_release -sr)"
@@ -193,13 +193,15 @@ update_repos() {
         fi
     done
 
-    if ! curl -o /usr/local/sbin/set_local_repos.sh-tmp "${REPO_FILE_URL}set_local_repos.sh"; then
-        send_mail "Fetch set_local_repos.sh failed.  Continuing on with in-image copy."
-    else
-        cat /usr/local/sbin/set_local_repos.sh-tmp > /usr/local/sbin/set_local_repos.sh
-        chmod +x /usr/local/sbin/set_local_repos.sh
-        rm -f /usr/local/sbin/set_local_repos.sh-tmp
-    fi
+    # we're not actually using the set_local_repos.sh script
+    # setting a repo server is as easy as renaming a file
+    #if ! curl -o /usr/local/sbin/set_local_repos.sh-tmp "${REPO_FILE_URL}set_local_repos.sh"; then
+    #    send_mail "Fetch set_local_repos.sh failed.  Continuing on with in-image copy."
+    #else
+    #    cat /usr/local/sbin/set_local_repos.sh-tmp > /usr/local/sbin/set_local_repos.sh
+    #    chmod +x /usr/local/sbin/set_local_repos.sh
+    #    rm -f /usr/local/sbin/set_local_repos.sh-tmp
+    #fi
 
     # successfully grabbed them all, so replace the entire $REPOS_DIR
     # content with them
@@ -210,15 +212,10 @@ update_repos() {
         true > "$file"
     done
 
-    for file in "$REPOS_DIR"/*-tmp; do
-        [ -e "$file" ] || break
-        mv "$file" "${file%-tmp}"
-    done
-
-    time dnf -y repolist
-
     # see how things ended up
     ls -l "${REPOS_DIR}"
 
     set_local_repo "${repo_servers[0]}"
+
+    time dnf -y repolist
 }
