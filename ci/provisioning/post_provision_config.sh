@@ -23,27 +23,18 @@ source ci/junit.sh
 DSL_REPO_var="DAOS_STACK_${DISTRO}_LOCAL_REPO"
 DSG_REPO_var="DAOS_STACK_${DISTRO}_GROUP_REPO"
 DSA_REPO_var="DAOS_STACK_${DISTRO}_APPSTREAM_REPO"
-: "${DAOS_STACK_EL_7_LOCAL_REPO:=}"
-: "${DAOS_STACK_EL_7_GROUP_REPO:=}"
-: "${DAOS_STACK_EL_7_APPSTREAM_REPO:=}"
-: "${CONFIG_POWER_ONLY:=}"
-: "${INST_RPMS:=}"
-: "${INST_REPOS:=}"
-: "${GPG_KEY_URLS:=}"
-: "${REPOSITORY_URL:=}"
-: "${JENKINS_URL:=}"
 
 retry_cmd 300 clush -B -S -l root -w "$NODESTRING" -c ci_key* --dest=/tmp/
 
 if ! retry_cmd 2400 clush -B -S -l root -w "$NODESTRING" \
            "export PS4='$PS4'
            MY_UID=$(id -u)
-           CONFIG_POWER_ONLY=$CONFIG_POWER_ONLY
-           INST_REPOS=\"$INST_REPOS\"
-           INST_RPMS=\$(eval echo $INST_RPMS)
-           GPG_KEY_URLS=\"$GPG_KEY_URLS\"
-           REPOSITORY_URL=\"$REPOSITORY_URL\"
-           JENKINS_URL=\"$JENKINS_URL\"
+           CONFIG_POWER_ONLY=${CONFIG_POWER_ONLY:-}
+           INST_REPOS=\"${INST_REPOS:-}\"
+           INST_RPMS=\$(eval echo ${INST_RPMS:-})
+           GPG_KEY_URLS=\"${GPG_KEY_URLS:-}\"
+           REPOSITORY_URL=\"${REPOSITORY_URL:-}\"
+           JENKINS_URL=\"${JENKINS_URL:-}\"
            DAOS_STACK_LOCAL_REPO=\"${!DSL_REPO_var}\"
            DAOS_STACK_GROUP_REPO=\"${!DSG_REPO_var:-}\"
            DAOS_STACK_EL_8_APPSTREAM_REPO=\"${!DSA_REPO_var:-}\"
@@ -55,6 +46,7 @@ if ! retry_cmd 2400 clush -B -S -l root -w "$NODESTRING" \
            OPERATIONS_EMAIL=\"${OPERATIONS_EMAIL}\"
            COMMIT_MESSAGE=\"${COMMIT_MESSAGE-}\"
            REPO_FILE_URL=\"$REPO_FILE_URL\"
+           ARTIFACTORY_URL=\"${ARTIFACTORY_URL:-}\"
            $(cat ci/stacktrace.sh)
            $(cat ci/junit.sh)
            $(cat ci/provisioning/post_provision_config_common_functions.sh)
