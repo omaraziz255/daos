@@ -41,28 +41,28 @@ distro_custom() {
         cat <<EOF >> /etc/yum.repos.d/daos_ci-rocky8-artifactory.repo
 [daos_ci-rocky8-base-nexus-debuginfo]
 name=daos_ci-rocky8-base-nexus-debuginfo
-baseurl=${REPOSITORY_URL}repository/rocky-\$releasever-proxy/BaseOS/\$arch/debug/tree/
+baseurl=${ARTIFACTORY_URL}artifactory/rocky-\$releasever-proxy/BaseOS/\$arch/debug/tree/
 enabled=0
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rockyofficial
 
 [daos_ci-rocky8-appstream-nexus-debuginfo]
 name=daos_ci-rocky8-appstream-nexus-debuginfo
-baseurl=${REPOSITORY_URL}repository/rocky-\$releasever-proxy/AppStream/\$arch/debug/tree/
+baseurl=${ARTIFACTORY_URL}artifactory/rocky-\$releasever-proxy/AppStream/\$arch/debug/tree/
 enabled=0
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rockyofficial
 
 [daos_ci-rocky8-powertools-nexus-debuginfo]
 name=daos_ci-rocky8-powertools-nexus-debuginfo
-baseurl=${REPOSITORY_URL}repository/rocky-\$releasever-proxy/PowerTools/\$arch/debug/tree/
+baseurl=${ARTIFACTORY_URL}artifactory/rocky-\$releasever-proxy/PowerTools/\$arch/debug/tree/
 enabled=0
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rockyofficial
 
 [daos_ci-rocky8-extras-nexus-debuginfo]
 name=daos_ci-rocky8-extras-nexus-debuginfo
-baseurl=${REPOSITORY_URL}repository/rocky-\$releasever-proxy/extras/\$arch/debug/tree/
+baseurl=${ARTIFACTORY_URL}artifactory/rocky-\$releasever-proxy/extras/\$arch/debug/tree/
 enabled=0
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rockyofficial
@@ -75,7 +75,7 @@ EOF
         cat <<EOF >> /etc/yum.repos.d/daos_ci-centos8.repo
 [daos_ci-centos8-artifactory-debuginfo]
 name=daos_ci-centos8-artifactory-debuginfo
-baseurl=https://artifactory.dc.hpdd.intel.com/artifactory/centos-debuginfo-proxy/$releasever/$basearch/os/
+baseurl=${ARTIFACTORY_URL}artifactory/centos-debuginfo-proxy/\$releasever/\$basearch/os/
 enabled=0
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial
