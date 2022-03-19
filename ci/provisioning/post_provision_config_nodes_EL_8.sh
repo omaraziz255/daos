@@ -67,6 +67,19 @@ enabled=0
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-rockyofficial
 EOF
+    else
+        if [ -f /etc/yum.repos.d/daos_ci-centos8.repo ]; then
+            echo >> /etc/yum.repos.d/daos_ci-centos8.repo
+        fi
+
+        cat <<EOF >> /etc/yum.repos.d/daos_ci-centos8.repo
+[daos_ci-centos8-artifactory-debuginfo]
+name=daos_ci-centos8-artifactory-debuginfo
+baseurl=https://artifactory.dc.hpdd.intel.com/artifactory/centos-debuginfo-proxy/$releasever/$basearch/os/
+enabled=0
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial
+EOF
     fi
 
     # Mellanox OFED hack

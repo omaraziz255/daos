@@ -228,8 +228,9 @@ fi
 ulimit -n 4096
 
 launch_args="-jcrisa"
-# can only process cores on EL7 currently
-if [ "$(lsb_release -s -i)" = "CentOS" ]    ||
+# processing cores broken on EL7 currently
+if ( [ "$(lsb_release -s -i)" = "CentOS" ] &&
+     [[ $(lsb_release -s -r) != 7.* ]] )    ||
    [ "$(lsb_release -s -i)" = "Rocky" ]     ||
    [ "$(lsb_release -s -i)" = "AlmaLinux" ] ||
    [ "$(lsb_release -s -i)" = "openSUSE" ]; then
